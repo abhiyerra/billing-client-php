@@ -40,7 +40,7 @@ class PlassoBilling {
       return;
     }
 
-    $results = file_get_contents('https://api.plasso.com/?query='.urlencode('{member(token:"'.$this->plassoToken.'"){id,stripeSubscriptionId,space{id,logoutUrl}}}'));
+    $results = file_get_contents('https://api.plasso.com/?query='.urlencode('{member(token:"'.$this->plassoToken.'"){id,stripeCustomerId,stripeSubscriptionId,space{id,logoutUrl}}}'));
     if(!$results) {
       $this->authError();
       return;
@@ -108,7 +108,7 @@ class PlassoBilling {
 }
 
 // To initalize, uncomment the next line:
-$plassoBilling = new PlassoBilling((isset($_GET['__logout']))?'logout':(isset($_GET['__plasso_token'])?$_GET['__plasso_token']:NULL), true, 'http://www.gitlead.com');
+// $plassoBilling = new PlassoBilling((isset($_GET['__logout']))?'logout':(isset($_GET['__plasso_token'])?$_GET['__plasso_token']:NULL), true, 'https://example.com');
 
 // Access the Plasso User ID with: $plassoBilling->plassoUserId
 
