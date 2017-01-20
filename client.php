@@ -1,11 +1,14 @@
 <?php
 
-Class PlassoBilling {
+class PlassoBilling {
   var $plassoUserId;
   var $plassoToken;
+  var $plassoLogoutUrl;
 
-  function __construct($plassoToken, $runProtect = true) {
+  function __construct($plassoToken, $runProtect = true, $logoutUrl = NULL) {
     $this->plassoToken = $plassoToken;
+    $this->plassoLogoutUrl = $logoutUrl;
+
     if($plassoToken == 'logout') {
       $this->authFail();
       $this->logout();
@@ -37,7 +40,7 @@ Class PlassoBilling {
       return;
     }
 
-    $results = file_get_contents('https://api.plasso.com/?query=%7Bmember(token%3A%22'.$this->plassoToken.'%22)%7Bid%2Cspace%7BlogoutUrl%7D%7D%7D');
+    $results = file_get_contents('https://api.plasso.com/?query='.urlencode('{member(token:"'.$this->plassoToken.'"){id,stripeSubscriptionId,space{id,logoutUrl}}}'));
     if(!$results) {
       $this->authError();
       return;
@@ -60,7 +63,13 @@ Class PlassoBilling {
   }
 
   function logout() {
-    $logoutUrl = ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')?'https':'http').'://'.$_SERVER['HTTP_HOST'];
+    $logoutUrl = $this->plassoLogoutUrl;
+
+    if($logoutUrl == '') {
+      $logoutUrl = ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')?'https':'http').'://'.$_SERVER['HTTP_HOST'];
+    }
+
+
     if(isset($_COOKIE['__plasso_billing']) &&
        $_COOKIE['__plasso_billing'] != '') {
       $cookieJson = json_decode($_COOKIE['__plasso_billing'], true);
@@ -85,12 +94,12 @@ Class PlassoBilling {
   }
 
   function errorPage() {
-    header($_SERVER['SERVER_PROTOCOL'].' 404 Not Found', true, 404); exit;
+    header($_SERVER['SERVER_PROTOCOL'].' 404 Not Found', true, 404);
+    exit;
   }
 
   function protect() {
-    if(isset($this->plassoToken) &&
-       $this->plassoToken == 'logout') {
+    if(isset($this->plassoToken) && $this->plassoToken == 'logout') {
       $this->logout();
     } else if($this->plassoToken == 'error') {
       $this->errorPage();
@@ -99,7 +108,7 @@ Class PlassoBilling {
 }
 
 // To initalize, uncomment the next line:
-$plassoBilling = new PlassoBilling((isset($_GET['__logout']))?'logout':(isset($_GET['__plasso_token'])?$_GET['__plasso_token']:NULL));
+$plassoBilling = new PlassoBilling((isset($_GET['__logout']))?'logout':(isset($_GET['__plasso_token'])?$_GET['__plasso_token']:NULL), true, 'http://www.gitlead.com');
 
 // Access the Plasso User ID with: $plassoBilling->plassoUserId
 
